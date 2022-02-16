@@ -1,5 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { useState, useEffect } from "react";
+import * as Updates from 'expo-updates';
 import {
   Alert,
   Button,
@@ -22,6 +23,20 @@ interface PlayerProps {
 }
 
 export default function App() {
+  async function updateApp() {
+    const { isAvailable } = await Updates.checkForUpdateAsync();
+
+    if (isAvailable) {
+      await Updates.fetchUpdateAsync();
+
+      await Updates.reloadAsync();
+    }
+  }
+
+  useEffect(() => {
+    updateApp();
+  }, []);
+
   const [name, setName] = useState("");
   const [names, setNames] = useState<PlayerProps[]>([]);
 
