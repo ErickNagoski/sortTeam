@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import { useState, useEffect } from "react";
-import * as Updates from 'expo-updates';
+import * as Updates from "expo-updates";
 import {
   Alert,
   Button,
@@ -16,7 +16,7 @@ import {
   View,
 } from "react-native";
 import ListItem from "./src/components/ListItem/ListItem";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 interface PlayerProps {
   name: string;
   ability: number;
@@ -48,6 +48,8 @@ export default function App() {
 
   const [showTeams, setShowTeams] = useState(false);
 
+  const [save, setSave] = useState<PlayerProps[]>([]);
+
   const saveNames = [
     { name: "Erick", ability: 2 },
     { name: "Edi", ability: 2 },
@@ -56,16 +58,23 @@ export default function App() {
     { name: "Daia", ability: 2 },
     { name: "Neli", ability: 2 },
     { name: "Pati", ability: 2 },
-    { name: "Tay", ability: 1 },
+    { name: "Darlan", ability: 3 },
     { name: "Daigo", ability: 3 },
     { name: "Roberta", ability: 1 },
     { name: "Jardel", ability: 3 },
     { name: "Franciele", ability: 2 },
   ];
 
+  // const [saveNames, setSaveNames] = useState<PlayerProps[]>([]);
+
   function handleAddPlayer(ability: number) {
     if (names.length < 12) {
       setNames((state) => [...state, { name, ability }]);
+      setSave((prevState) => {
+        return [...prevState, { name, ability }];
+      });
+      save.push({ name, ability });
+      console.log("#######################################", save);
     } else {
       Alert.alert("O máximo de jogadores é 12!");
     }
@@ -76,33 +85,9 @@ export default function App() {
     setTeamOne([]);
     setTeamTwo([]);
 
-    for (let i = 1; i <= 12; i++) {
-      console.log(names.length);
-      if (names.length >= 1) {
-        const number = Math.random() * (names.length - 0) + 0;
-        if (i % 2 === 0) {
-          const player = names.splice(number, 1);
-          setTeamOne((state) => [...state, player[0].name]);
-          setTimeCont1((state) => state + player[0].ability);
-        } else {
-          const player = names.splice(number, 1);
-          setTeamTwo((state) => [...state, player[0].name]);
-          setTimeCont2((state) => state + player[0].ability);
-        }
-      }
-    }
-    setShowTeams(true);
-  }
-
-  function sortSaved() {
-    const jogadores = saveNames;
-    setTeamOne([]);
-    setTeamTwo([]);
-    setTimeCont1(0);
-    setTimeCont2(0);
+    const jogadores = names;
 
     for (let i = 1; i <= 12; i++) {
-      console.log(jogadores.length);
       if (jogadores.length >= 1) {
         const number = Math.random() * (jogadores.length - 0) + 0;
         if (i % 2 === 0) {
@@ -119,9 +104,96 @@ export default function App() {
     setShowTeams(true);
   }
 
+  function sortSaved() {
+    const jogadores = saveNames;
+    setTeamOne([]);
+    setTeamTwo([]);
+    setTimeCont1(0);
+    setTimeCont2(0);
+
+    for (let i = 1; i <= 12; i++) {
+      if (jogadores.length >= 1) {
+        const number = Math.random() * (jogadores.length - 0) + 0;
+        if (i % 2 === 0) {
+          const player = jogadores.splice(number, 1);
+          setTeamOne((state) => [...state, player[0].name]);
+          setTimeCont1((state) => state + player[0].ability);
+        } else {
+          const player = jogadores.splice(number, 1);
+          setTeamTwo((state) => [...state, player[0].name]);
+          setTimeCont2((state) => state + player[0].ability);
+        }
+      }
+    }
+    setShowTeams(true);
+  }
+
+  // async function sortSaved() {
+  //   let players:PlayerProps[] = [];
+
+  //  const savedMemoryJson =  await AsyncStorage.getItem("players")
+
+  //  const playersMemory = JSON.parse(savedMemoryJson  as string);
+
+  //  playersMemory.forEach((element) => {
+  //   players.push(element);
+  // })
+
+  //   setTeamOne([]);
+  //   setTeamTwo([]);
+
+  //   setTimeCont1(0);
+  //   setTimeCont2(0);
+
+  //   setShowTeams(false);
+
+  //   const jogadores = players;
+
+  //   console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",jogadores)
+
+  //   for (let i = 1; i <= 12; i++) {
+  //     if (jogadores.length >= 1) {
+  //       const number = Math.random() * (jogadores.length - 0) + 0;
+  //       if (i % 2 === 0) {
+  //         const player = jogadores.splice(number, 1);
+  //         setTeamOne((state) => [...state, player[0].name]);
+  //         setTimeCont1((state) => state + player[0].ability);
+  //       } else {
+  //         const player = jogadores.splice(number, 1);
+  //         setTeamTwo((state) => [...state, player[0].name]);
+  //         setTimeCont2((state) => state + player[0].ability);
+  //       }
+  //     }
+  //   }
+  //   setShowTeams(true);
+  //   console.log("jogadores", saveNames);
+  // }
+
+
   useEffect(() => {
-    console.log(name);
-  }, [name]);
+    console.log(saveNames);
+  }, [saveNames]);
+
+  function handleSaveList() {
+    AsyncStorage.setItem("players", JSON.stringify(names))
+      .then(() => {
+        Alert.alert("salvos");
+      })
+      .catch((e) => {
+        Alert.alert("Erro ao salvar!");
+      });
+  }
+
+  async function handleLoadList() {
+    AsyncStorage.getItem("players")
+      .catch((e) => {
+        console.error(e);
+      })
+      .then((res) => {
+        setNames(JSON.parse(res as string));
+        console.log(res);
+      });
+  }
 
   return (
     <KeyboardAvoidingView
@@ -138,30 +210,67 @@ export default function App() {
             placeholder="Nome"
           />
           <View style={styles.buttonContainer}>
-            {/* <TouchableOpacity style={[styles.button, { backgroundColor: "red" }]} onPress={() => { handleAddPlayer(3) }}><Text style={styles.buttonText}>High</Text></TouchableOpacity>
-            <TouchableOpacity style={[styles.button, { backgroundColor: "orange" }]} onPress={() => { handleAddPlayer(2) }}><Text style={styles.buttonText}>Medium</Text></TouchableOpacity> */}
             <TouchableOpacity
-              style={[styles.button, { backgroundColor: "blue" }]}
-              onPress={sortSaved}
+              style={[styles.button, { backgroundColor: "red" }]}
+              onPress={() => {
+                handleAddPlayer(3);
+              }}
             >
-              <Text style={styles.buttonText}>Sortear lista salva</Text>
+              <Text style={styles.buttonText}>3</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "orange" }]}
+              onPress={() => {
+                handleAddPlayer(2);
+              }}
+            >
+              <Text style={styles.buttonText}>2</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, { backgroundColor: "green" }]}
-              disabled={names.length === 12}
               onPress={() => {
                 handleAddPlayer(1);
               }}
             >
-              <Text style={styles.buttonText}>Adicionar</Text>
+              <Text style={styles.buttonText}>1</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
+            style={[styles.button, { backgroundColor: "blue" }]}
+            onPress={() => {
+              handleSaveList();
+            }}
+          >
+            <Text style={styles.buttonText}>Salvar Lista</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "blue" }]}
+            onPress={() => {
+              handleLoadList();
+            }}
+          >
+            <Text style={styles.buttonText}>Buscar Lista</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.button, { backgroundColor: "red" }]}
-            onPress={sort}
-            // disabled={names.length === 0}
+            onPress={() => {
+              console.log(names);
+              console.log(showTeams);
+              // setShowTeams(false);
+              sortSaved();
+            }}
           >
             <Text style={styles.buttonText}>Sortear</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "orange" }]}
+            onPress={() => {
+              setNames([]);
+            }}
+          >
+            <Text style={styles.buttonText}>Nova Lista</Text>
           </TouchableOpacity>
 
           {!showTeams && (
