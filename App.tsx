@@ -54,11 +54,11 @@ export default function App() {
     { name: "Ana", ability: 1 },
     { name: "Lindones", ability: 2 },
     { name: "Daia", ability: 2 },
-    { name: "Darlan", ability: 3 },
+    { name: "Neli", ability: 2 },
     { name: "Pati", ability: 2 },
     { name: "Tay", ability: 1 },
     { name: "Daigo", ability: 3 },
-    { name: "Wilson", ability: 1 },
+    { name: "Roberta", ability: 1 },
     { name: "Jardel", ability: 3 },
     { name: "Franciele", ability: 2 },
   ];
