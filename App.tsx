@@ -16,8 +16,10 @@ import {
   View,
 } from "react-native";
 import ListItem from "./src/components/ListItem/ListItem";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-interface PlayerProps {
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import TeamList from "./src/components/TeamList";
+import ModalSaveList from "./src/components/ModalSaveList";
+export interface PlayerProps {
   name: string;
   ability: number;
 }
@@ -50,6 +52,8 @@ export default function App() {
 
   const [save, setSave] = useState<PlayerProps[]>([]);
 
+  const [savedModal, setSavedModal] = useState(false)
+
   const saveNames = [
     { name: "Erick", ability: 2 },
     { name: "Edi", ability: 2 },
@@ -67,66 +71,70 @@ export default function App() {
 
   // const [saveNames, setSaveNames] = useState<PlayerProps[]>([]);
 
-  function handleAddPlayer(ability: number) {
-    if (names.length < 12) {
-      setNames((state) => [...state, { name, ability }]);
-      setSave((prevState) => {
-        return [...prevState, { name, ability }];
-      });
-      save.push({ name, ability });
-      console.log("#######################################", save);
-    } else {
-      Alert.alert("O máximo de jogadores é 12!");
-    }
-    console.log(names);
-  }
+  // function handleAddPlayer(ability: number) {
+  //   if (names.length < 12) {
+  //     setNames((state) => [...state, { name, ability }]);
+  //     setSave((prevState) => {
+  //       return [...prevState, { name, ability }];
+  //     });
+  //     save.push({ name, ability });
+  //     console.log("#######################################", save);
+  //   } else {
+  //     Alert.alert("O máximo de jogadores é 12!");
+  //   }
+  //   console.log(names);
+  // }
 
-  function sort() {
-    setTeamOne([]);
-    setTeamTwo([]);
-
-    const jogadores = names;
-
-    for (let i = 1; i <= 12; i++) {
-      if (jogadores.length >= 1) {
-        const number = Math.random() * (jogadores.length - 0) + 0;
-        if (i % 2 === 0) {
-          const player = jogadores.splice(number, 1);
-          setTeamOne((state) => [...state, player[0].name]);
-          setTimeCont1((state) => state + player[0].ability);
-        } else {
-          const player = jogadores.splice(number, 1);
-          setTeamTwo((state) => [...state, player[0].name]);
-          setTimeCont2((state) => state + player[0].ability);
-        }
-      }
-    }
-    setShowTeams(true);
-  }
-
-  function sortSaved() {
-    const jogadores = saveNames;
+  function sort(jogadores: PlayerProps[]) {
     setTeamOne([]);
     setTeamTwo([]);
     setTimeCont1(0);
     setTimeCont2(0);
 
-    for (let i = 1; i <= 12; i++) {
-      if (jogadores.length >= 1) {
-        const number = Math.random() * (jogadores.length - 0) + 0;
-        if (i % 2 === 0) {
-          const player = jogadores.splice(number, 1);
-          setTeamOne((state) => [...state, player[0].name]);
-          setTimeCont1((state) => state + player[0].ability);
-        } else {
-          const player = jogadores.splice(number, 1);
-          setTeamTwo((state) => [...state, player[0].name]);
-          setTimeCont2((state) => state + player[0].ability);
+    
+
+
+      for (let i = 1; i <= 12; i++) {
+        if (jogadores.length >= 1) {
+          const number = Math.random() * (jogadores.length - 0) + 0;
+          if (i % 2 === 0) {
+            const player = jogadores.splice(number, 1);
+            setTeamOne((state: string[]) => [...state, player[0].name]);
+            setTimeCont1((state: number) => state + player[0].ability);
+          } else {
+            const player = jogadores.splice(number, 1);
+            setTeamTwo((state: string[]) => [...state, player[0].name]);
+            setTimeCont2((state: number) => state + player[0].ability);
+          }
         }
       }
-    }
+    
     setShowTeams(true);
   }
+
+  // function sortSaved() {
+  //   const jogadores = saveNames;
+  //   setTeamOne([]);
+  //   setTeamTwo([]);
+  //   setTimeCont1(0);
+  //   setTimeCont2(0);
+
+  //   for (let i = 1; i <= 12; i++) {
+  //     if (jogadores.length >= 1) {
+  //       const number = Math.random() * (jogadores.length - 0) + 0;
+  //       if (i % 2 === 0) {
+  //         const player = jogadores.splice(number, 1);
+  //         setTeamOne((state) => [...state, player[0].name]);
+  //         setTimeCont1((state) => state + player[0].ability);
+  //       } else {
+  //         const player = jogadores.splice(number, 1);
+  //         setTeamTwo((state) => [...state, player[0].name]);
+  //         setTimeCont2((state) => state + player[0].ability);
+  //       }
+  //     }
+  //   }
+  //   setShowTeams(true);
+  // }
 
   // async function sortSaved() {
   //   let players:PlayerProps[] = [];
@@ -169,36 +177,10 @@ export default function App() {
   //   console.log("jogadores", saveNames);
   // }
 
-
-  useEffect(() => {
-    console.log(saveNames);
-  }, [saveNames]);
-
-  function handleSaveList() {
-    AsyncStorage.setItem("players", JSON.stringify(names))
-      .then(() => {
-        Alert.alert("salvos");
-      })
-      .catch((e) => {
-        Alert.alert("Erro ao salvar!");
-      });
-  }
-
-  async function handleLoadList() {
-    AsyncStorage.getItem("players")
-      .catch((e) => {
-        console.error(e);
-      })
-      .then((res) => {
-        setNames(JSON.parse(res as string));
-        console.log(res);
-      });
-  }
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      //behavior={Platform.OS === "ios" ? "padding" : "height"}
+    //behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={styles.container}>
@@ -238,7 +220,7 @@ export default function App() {
           <TouchableOpacity
             style={[styles.button, { backgroundColor: "blue" }]}
             onPress={() => {
-              handleSaveList();
+              // handleSaveList();
             }}
           >
             <Text style={styles.buttonText}>Salvar Lista</Text>
@@ -246,7 +228,7 @@ export default function App() {
           <TouchableOpacity
             style={[styles.button, { backgroundColor: "blue" }]}
             onPress={() => {
-              handleLoadList();
+              setSavedModal(true)
             }}
           >
             <Text style={styles.buttonText}>Buscar Lista</Text>
@@ -258,7 +240,7 @@ export default function App() {
               console.log(names);
               console.log(showTeams);
               // setShowTeams(false);
-              sortSaved();
+              // sortSaved();
             }}
           >
             <Text style={styles.buttonText}>Sortear</Text>
@@ -278,7 +260,7 @@ export default function App() {
               <Text style={[styles.title, { marginTop: 20 }]}>Jogadores</Text>
               <FlatList
                 style={styles.list}
-                data={names}
+                data={saveNames}
                 keyExtractor={(item) => `${item.name}${Math.random()}`}
                 renderItem={({ item }) => {
                   return (
@@ -290,20 +272,28 @@ export default function App() {
             </>
           )}
 
-          {showTeams && (
-            <View style={styles.teamListContainer}>
-              <View style={styles.listContainer}>
-                <Text style={styles.title}>Time 1 </Text>
-                <Text style={styles.title}>Pts: {timecont1}</Text>
-                <FlatList
-                  style={styles.teamList}
-                  data={teamOne}
-                  keyExtractor={(item) => item}
-                  renderItem={({ item }) => {
-                    return <Text>{item}</Text>;
-                  }}
-                />
-              </View>
+          {/* {showTeams && ( */}
+          <View style={styles.teamsContainer}>
+            <View style={{ width: '50%' }}>
+              <Text style={styles.title}>Time 1 </Text>
+              <Text style={styles.title}>Pts: {timecont1}</Text>
+
+              <TeamList team={teamOne} />
+            </View>
+            <View style={{ width: '50%' }}>
+              <Text style={styles.title}>Time 2 </Text>
+              <Text style={styles.title}>Pts: {timecont2}</Text>
+
+              <TeamList team={teamTwo} />
+              {console.log(teamOne)}
+            </View>
+          </View>
+
+
+
+
+          {/* <View style={styles.teamListContainer}>
+              
               <View style={styles.listContainer}>
                 <Text style={styles.title}>Time 2</Text>
                 <Text style={styles.title}>Pts: {timecont2}</Text>
@@ -316,8 +306,9 @@ export default function App() {
                   }}
                 />
               </View>
-            </View>
-          )}
+            </View> */}
+          {/* )} */}
+          <ModalSaveList isOpen={savedModal} onClose={() => { setSavedModal(false) }} sort={sort} />
         </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -374,16 +365,13 @@ const styles = StyleSheet.create({
     width: "80%",
     maxHeight: 300,
   },
-  teamList: {
-    width: "50%",
-    maxHeight: 150,
-  },
-  teamListContainer: {
+
+  teamsContainer: {
     width: "80%",
     display: "flex",
     flexDirection: "row",
     marginVertical: 20,
-    justifyContent: "space-evenly",
+    justifyContent: "space-between",
     alignItems: "center",
   },
   listContainer: {
