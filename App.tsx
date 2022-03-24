@@ -1,4 +1,3 @@
-import { StatusBar } from "expo-status-bar";
 import { useState, useEffect } from "react";
 import * as Updates from "expo-updates";
 import {
@@ -8,17 +7,19 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  StatusBar
 } from "react-native";
 import ListItem from "./src/components/ListItem/ListItem";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import TeamList from "./src/components/TeamList";
-import ModalSaveList from "./src/components/ModalSaveList";
+import ModalSaveList, { handleLoadList } from "./src/components/ModalSaveList";
 export interface PlayerProps {
   name: string;
   ability: number;
@@ -30,7 +31,6 @@ export default function App() {
 
     if (isAvailable) {
       await Updates.fetchUpdateAsync();
-
       await Updates.reloadAsync();
     }
   }
@@ -38,9 +38,6 @@ export default function App() {
   useEffect(() => {
     updateApp();
   }, []);
-
-  const [name, setName] = useState("");
-  const [names, setNames] = useState<PlayerProps[]>([]);
 
   const [teamOne, setTeamOne] = useState<string[]>([]);
   const [teamTwo, setTeamTwo] = useState<string[]>([]);
@@ -50,265 +47,133 @@ export default function App() {
 
   const [showTeams, setShowTeams] = useState(false);
 
-  const [save, setSave] = useState<PlayerProps[]>([]);
-
   const [savedModal, setSavedModal] = useState(false)
 
-  const saveNames = [
-    { name: "Erick", ability: 2 },
-    { name: "Edi", ability: 2 },
-    { name: "Ana", ability: 1 },
-    { name: "Lindones", ability: 2 },
-    { name: "Daia", ability: 2 },
-    { name: "Neli", ability: 2 },
-    { name: "Pati", ability: 2 },
-    { name: "Darlan", ability: 3 },
-    { name: "Daigo", ability: 3 },
-    { name: "Roberta", ability: 1 },
-    { name: "Jardel", ability: 3 },
-    { name: "Franciele", ability: 2 },
-  ];
+  const [jogadores, setJogadores] = useState<PlayerProps[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // const [saveNames, setSaveNames] = useState<PlayerProps[]>([]);
+  function getData() {
+    setShowTeams(false)
+    handleLoadList().then((res) => {
+      setJogadores(res)
+      setLoading(false)
+    }).catch(() => {
+      Alert.alert('Erro', "Não foi possivel buscar os jogadores salvos!")
+      setLoading(false)
+    })
+  }
 
-  // function handleAddPlayer(ability: number) {
-  //   if (names.length < 12) {
-  //     setNames((state) => [...state, { name, ability }]);
-  //     setSave((prevState) => {
-  //       return [...prevState, { name, ability }];
-  //     });
-  //     save.push({ name, ability });
-  //     console.log("#######################################", save);
-  //   } else {
-  //     Alert.alert("O máximo de jogadores é 12!");
-  //   }
-  //   console.log(names);
-  // }
+  useEffect(() => {
+    getData();
+  }, [])
 
-  function sort(jogadores: PlayerProps[]) {
+  function sortSaved() {
+    const nomes = jogadores;
     setTeamOne([]);
     setTeamTwo([]);
     setTimeCont1(0);
     setTimeCont2(0);
 
-    
-
-
-      for (let i = 1; i <= 12; i++) {
-        if (jogadores.length >= 1) {
-          const number = Math.random() * (jogadores.length - 0) + 0;
-          if (i % 2 === 0) {
-            const player = jogadores.splice(number, 1);
-            setTeamOne((state: string[]) => [...state, player[0].name]);
-            setTimeCont1((state: number) => state + player[0].ability);
-          } else {
-            const player = jogadores.splice(number, 1);
-            setTeamTwo((state: string[]) => [...state, player[0].name]);
-            setTimeCont2((state: number) => state + player[0].ability);
-          }
+    for (let i = 1; i <= 12; i++) {
+      if (nomes.length >= 1) {
+        const number = Math.random() * (nomes.length - 0) + 0;
+        if (i % 2 === 0) {
+          const player = nomes.splice(number, 1);
+          setTeamOne((state) => [...state, player[0].name]);
+          setTimeCont1((state) => state + player[0].ability);
+        } else {
+          const player = nomes.splice(number, 1);
+          setTeamTwo((state) => [...state, player[0].name]);
+          setTimeCont2((state) => state + player[0].ability);
         }
       }
-    
+    }
+    console.log('teamOne', teamOne.length)
+    console.log('teamTwo', teamTwo.length)
     setShowTeams(true);
   }
 
-  // function sortSaved() {
-  //   const jogadores = saveNames;
-  //   setTeamOne([]);
-  //   setTeamTwo([]);
-  //   setTimeCont1(0);
-  //   setTimeCont2(0);
-
-  //   for (let i = 1; i <= 12; i++) {
-  //     if (jogadores.length >= 1) {
-  //       const number = Math.random() * (jogadores.length - 0) + 0;
-  //       if (i % 2 === 0) {
-  //         const player = jogadores.splice(number, 1);
-  //         setTeamOne((state) => [...state, player[0].name]);
-  //         setTimeCont1((state) => state + player[0].ability);
-  //       } else {
-  //         const player = jogadores.splice(number, 1);
-  //         setTeamTwo((state) => [...state, player[0].name]);
-  //         setTimeCont2((state) => state + player[0].ability);
-  //       }
-  //     }
-  //   }
-  //   setShowTeams(true);
-  // }
-
-  // async function sortSaved() {
-  //   let players:PlayerProps[] = [];
-
-  //  const savedMemoryJson =  await AsyncStorage.getItem("players")
-
-  //  const playersMemory = JSON.parse(savedMemoryJson  as string);
-
-  //  playersMemory.forEach((element) => {
-  //   players.push(element);
-  // })
-
-  //   setTeamOne([]);
-  //   setTeamTwo([]);
-
-  //   setTimeCont1(0);
-  //   setTimeCont2(0);
-
-  //   setShowTeams(false);
-
-  //   const jogadores = players;
-
-  //   console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%",jogadores)
-
-  //   for (let i = 1; i <= 12; i++) {
-  //     if (jogadores.length >= 1) {
-  //       const number = Math.random() * (jogadores.length - 0) + 0;
-  //       if (i % 2 === 0) {
-  //         const player = jogadores.splice(number, 1);
-  //         setTeamOne((state) => [...state, player[0].name]);
-  //         setTimeCont1((state) => state + player[0].ability);
-  //       } else {
-  //         const player = jogadores.splice(number, 1);
-  //         setTeamTwo((state) => [...state, player[0].name]);
-  //         setTimeCont2((state) => state + player[0].ability);
-  //       }
-  //     }
-  //   }
-  //   setShowTeams(true);
-  //   console.log("jogadores", saveNames);
-  // }
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-    //behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={styles.container}>
-          <TextInput
-            onChangeText={(txt) => {
-              setName(txt);
-            }}
-            style={styles.input}
-            placeholder="Nome"
-          />
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "red" }]}
-              onPress={() => {
-                handleAddPlayer(3);
-              }}
-            >
-              <Text style={styles.buttonText}>3</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "orange" }]}
-              onPress={() => {
-                handleAddPlayer(2);
-              }}
-            >
-              <Text style={styles.buttonText}>2</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: "green" }]}
-              onPress={() => {
-                handleAddPlayer(1);
-              }}
-            >
-              <Text style={styles.buttonText}>1</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: "blue" }]}
-            onPress={() => {
-              // handleSaveList();
-            }}
-          >
-            <Text style={styles.buttonText}>Salvar Lista</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: "blue" }]}
-            onPress={() => {
-              setSavedModal(true)
-            }}
-          >
-            <Text style={styles.buttonText}>Buscar Lista</Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: "red" }]}
-            onPress={() => {
-              console.log(names);
-              console.log(showTeams);
-              // setShowTeams(false);
-              // sortSaved();
-            }}
-          >
-            <Text style={styles.buttonText}>Sortear</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: "orange" }]}
-            onPress={() => {
-              setNames([]);
-            }}
-          >
-            <Text style={styles.buttonText}>Nova Lista</Text>
-          </TouchableOpacity>
-
-          {!showTeams && (
-            <>
-              <Text style={[styles.title, { marginTop: 20 }]}>Jogadores</Text>
-              <FlatList
-                style={styles.list}
-                data={saveNames}
-                keyExtractor={(item) => `${item.name}${Math.random()}`}
-                renderItem={({ item }) => {
-                  return (
-                    <Text>{item.name}</Text>
-                    // <ListItem name={item.name} ability={item.ability} />
-                  );
-                }}
-              />
-            </>
-          )}
-
-          {/* {showTeams && ( */}
-          <View style={styles.teamsContainer}>
-            <View style={{ width: '50%' }}>
-              <Text style={styles.title}>Time 1 </Text>
-              <Text style={styles.title}>Pts: {timecont1}</Text>
-
-              <TeamList team={teamOne} />
-            </View>
-            <View style={{ width: '50%' }}>
-              <Text style={styles.title}>Time 2 </Text>
-              <Text style={styles.title}>Pts: {timecont2}</Text>
-
-              <TeamList team={teamTwo} />
-              {console.log(teamOne)}
-            </View>
-          </View>
-
-
-
-
-          {/* <View style={styles.teamListContainer}>
-              
-              <View style={styles.listContainer}>
-                <Text style={styles.title}>Time 2</Text>
-                <Text style={styles.title}>Pts: {timecont2}</Text>
+          <View style={styles.content}>
+            {jogadores.length < 1 && !showTeams && (
+              <Text style={[styles.title, { marginTop: 20 }]}>Adicione novos jogadores</Text>
+            )}
+            {!showTeams && jogadores.length >= 1 && (
+              <>
+                <Text style={[styles.title, { marginTop: 10 }]}>Jogadores</Text>
                 <FlatList
-                  style={styles.teamList}
-                  data={teamTwo}
-                  keyExtractor={(item) => item}
+                  style={styles.list}
+                  data={jogadores}
+                  keyExtractor={(item) => `${item.name}${Math.random()}`}
                   renderItem={({ item }) => {
-                    return <Text>{item}</Text>;
+                    return (
+                      <ListItem withRemove={false} handleRemove={async (nome: string): Promise<boolean> => { return true }} name={item.name} ability={item.ability} />
+                    );
                   }}
                 />
+              </>
+
+            )}
+
+            {!showTeams && jogadores.length >= 1 && (
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "red" }]}
+                onPress={() => {
+                  sortSaved()
+                }}
+                disabled={jogadores.length < 1}
+              >
+                <Text style={[styles.buttonText, { color: "#FFF" }]}>Sortear</Text>
+              </TouchableOpacity>
+            )}
+
+            {showTeams && (<View style={styles.teamsContainer}>
+              <View style={{ width: '50%' }}>
+                <Text style={styles.title}>Time 1 </Text>
+                <Text style={styles.title}>Pts: {timecont1}</Text>
+
+                <TeamList team={teamOne} />
               </View>
-            </View> */}
-          {/* )} */}
-          <ModalSaveList isOpen={savedModal} onClose={() => { setSavedModal(false) }} sort={sort} />
+              <View style={{ width: '50%' }}>
+                <Text style={styles.title}>Time 2 </Text>
+                <Text style={styles.title}>Pts: {timecont2}</Text>
+
+                <TeamList team={teamTwo} />
+              </View>
+            </View>)}
+            <View style={{ flexDirection: 'row', width: '100%', height: 40, justifyContent: "space-evenly" }}>
+              <TouchableOpacity
+                style={[styles.button, {
+                  borderColor: "red",
+                  borderWidth: 3
+                }]}
+                onPress={() => {
+                  getData();
+                }}
+              >
+                <Text style={styles.buttonText}>Recarregar Lista</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, {
+                  borderColor: "red",
+                  borderWidth: 3
+                }]}
+                onPress={() => {
+                  setSavedModal(true)
+                }}
+              >
+                <Text style={styles.buttonText}>Editar Lista de Jogadores</Text>
+              </TouchableOpacity>
+            </View>
+            <ModalSaveList isOpen={savedModal} onClose={() => { setSavedModal(false) }} sort={() => { }} />
+          </View>
         </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -318,9 +183,16 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#eeeeee",
+    paddingTop: StatusBar.currentHeight,
     alignItems: "center",
-    justifyContent: "center",
+    width: "100%",
+    height: "100%",
+  },
+
+  content: {
+    // backgroundColor: "#eeeeee",
+    alignItems: "center",
+    justifyContent: "flex-start",
     width: "100%",
     height: "100%",
   },
@@ -339,21 +211,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     paddingHorizontal: "5%",
-    marginBottom: 25,
+    marginBottom: 5,
   },
 
   button: {
-    width: "30%",
-    height: 25,
+    width: "40%",
+    height: 40,
+    marginBottom: 5,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
+    borderColor: "red",
+    borderWidth: 3
   },
 
   buttonText: {
     fontWeight: "bold",
-    color: "#ffffff",
+    color: "#000",
+    textAlign: "center"
   },
   listItem: {
     flexDirection: "row",
@@ -363,7 +239,8 @@ const styles = StyleSheet.create({
   },
   list: {
     width: "80%",
-    maxHeight: 300,
+    maxHeight: 600,
+    marginBottom: 10,
   },
 
   teamsContainer: {

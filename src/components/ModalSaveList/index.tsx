@@ -1,54 +1,93 @@
-import { Alert, Button, FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Button, FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useEffect, useState } from "react";
 import { PlayerProps } from "../../../App";
+import ListItem from "../ListItem/ListItem";
 
 interface ModalSaveListProps {
     isOpen: boolean;
-    onClose:()=>void;
-    sort:(jogadores:PlayerProps[])=>void;
+    onClose: () => void;
+    sort: (jogadores: PlayerProps[]) => void;
 }
+export async function handleLoadList(): Promise<PlayerProps[]> {
+    return new Promise<PlayerProps[]>((resolve, reject) => {
+        try {
+            AsyncStorage.getItem("players")
+                .catch((e) => {
+                    console.error(e);
+                    reject()
+                })
+                .then((res) => {
+                    if (res !== null) {
+                        const storageList = JSON.parse(res as string);
+                        console.log(storageList)
+                        resolve(storageList)
+                    }
+                });
+        } catch (error) {
+            reject()
+        }
+    })
+}
+
 
 function ModalSaveList({ isOpen, onClose, sort }: ModalSaveListProps): JSX.Element {
     const [jogadores, setJogadores] = useState<PlayerProps[]>([]);
 
-    function handleSaveList() {
-        if (jogadores) {
-            AsyncStorage.setItem("players", JSON.stringify(jogadores))
-                .then(() => {
-                    Alert.alert("salvos");
-                })
-                .catch((e) => {
-                    Alert.alert("Erro ao salvar!");
-                });
-        } else {
-            AsyncStorage.setItem('players', '')
-        }
+    const [nome, setNome] = useState('');
 
-    }
+    async function handleSaveList(): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            try {
 
-    async function handleLoadList(): Promise<void> {
-        AsyncStorage.getItem("players")
-            .catch((e) => {
-                console.error(e);
-                handleSaveList()
-            })
-            .then((res) => {
-                if (res !== null) {
-                    const parseString = JSON.parse(res as string);
-                    setJogadores(parseString);
-                    console.log(res)
+                if (jogadores && jogadores.length >= 1) {
+                    AsyncStorage.setItem("players", JSON.stringify(jogadores))
+                        .then(() => {
+                            Alert.alert("", "Salvo com sucesso!");
+                            resolve(true)
+                        })
+                        .catch((e) => {
+                            Alert.alert('', "Erro ao salvar!");
+                            reject()
+                        });
+                } else {
+                    AsyncStorage.setItem('players', '')
+                    Alert.alert('', "Erro ao salvar!");
                 }
-            });
+
+            } catch (error) {
+                reject()
+            }
+        })
     }
+
+
 
     useEffect(() => {
-        handleLoadList();
-        console.log('load')
+        handleLoadList().then(response => {
+            setJogadores(response)
+        }).catch(() => {
+            console.log('erro ao buscar dados')
+        })
     }, [])
 
-    function handleDeleteList() {
-        AsyncStorage.setItem('players', JSON.stringify([]))
+
+    function handleDeleteList(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            try {
+                AsyncStorage.setItem('players', JSON.stringify([])).then(() => {
+                    console.log('Apagou')
+                }).then(() => {
+                    resolve(true)
+                }).catch(() => {
+                    reject()
+                })
+
+            } catch (error) {
+                reject()
+            }
+        })
+
     }
 
     function handleAlert() {
@@ -57,53 +96,132 @@ function ModalSaveList({ isOpen, onClose, sort }: ModalSaveListProps): JSX.Eleme
             "Realmente deseja excluir a lista salva?",
             [
                 // The "Yes" button
-                {
-                    text: "Sim",
-                    onPress: () => {
-                        handleDeleteList
-                    },
-                },
+
                 // The "No" button
                 // Does nothing but dismiss the dialog when tapped
                 {
                     text: "Não",
                 },
+                {
+                    text: "Sim",
+                    onPress: () => {
+                        handleDeleteList().then(() => {
+                            handleLoadList().then((response) => {
+                                setJogadores(response)
+                            })
+                        })
+                    },
+                },
             ]
         );
+    }
+
+    async function handleRemove(nome: string): Promise<boolean> {
+        return new Promise<boolean>(async (resolve, reject) => {
+            try {
+                const filter = jogadores.filter(item => item.name !== nome)
+                setJogadores(filter)
+                handleSaveList().then(() => {
+                    resolve(true)
+                })
+            } catch (error) {
+                reject()
+            }
+        })
     }
 
 
 
     return (
         <Modal visible={isOpen} style={styles.container}  >
-            <TouchableOpacity onPress={onClose} style={{alignSelf:'flex-end', margin:10}}>
-                <Text style={{fontWeight:'bold', fontSize:18}}>X</Text>
+            <TouchableOpacity onPress={onClose} style={{ alignSelf: 'flex-end', margin: 10 }}>
+                <Text style={{ fontWeight: 'bold', fontSize: 18 }}>Fechar</Text>
             </TouchableOpacity>
-            {jogadores.length===0&&(
-                <Button title="Recarregar" onPress={handleLoadList}/>
-            )}
-            <View style={styles.container}>
+            <TextInput
+                style={styles.input}
+                value={nome}
+                placeholder='Nome:'
+                onChangeText={(text) => {
+                    setNome(text)
+                }}
+            />
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.button} disabled={jogadores.length === 12} onPress={() => {
+                    if (jogadores.length < 12) {
+                        if (nome.length >= 1) {
+
+                            setJogadores(state => [...state, {
+                                name: nome,
+                                ability: 3
+                            }])
+                        }
+                    } else {
+                        Alert.alert('Atenção!', "Número máximo de jogadores atingido!")
+                    }
+                    setNome('')
+                }}>
+                    <Text>Nível 3</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} disabled={jogadores.length === 12} onPress={() => {
+                    if (jogadores.length < 12) {
+                        if (nome.length >= 1) {
+
+                            setJogadores(state => [...state, {
+                                name: nome,
+                                ability: 2
+                            }])
+                        }
+                    } else {
+                        Alert.alert('Atenção!', "Número máximo de jogadores atingido!")
+                    }
+                    setNome('')
+                }}>
+                    <Text>Nível 2</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} disabled={jogadores.length === 12} onPress={() => {
+                    if (jogadores.length < 12) {
+                        if (nome.length >= 1) {
+
+                            setJogadores(state => [...state, {
+                                name: nome,
+                                ability: 1
+                            }])
+                        }
+                    } else {
+                        Alert.alert('Atenção!', "Número máximo de jogadores atingido!")
+                    }
+                    setNome('')
+                }}>
+                    <Text>Nível 1</Text>
+                </TouchableOpacity>
+            </View>
+
+            <View style={styles.buttonContainer}>
+
+                <TouchableOpacity style={styles.button} onPress={handleSaveList}>
+                    <Text>Salva Lista</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={() => {
+                    handleLoadList().then((response) => {
+                        setJogadores(response)
+                    })
+                }}>
+                    <Text>Recarregar Lista</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.button} onPress={handleAlert}>
+                    <Text>Apagar Lista</Text>
+                </TouchableOpacity>
+            </View>
+            {jogadores.length >= 1 && (
                 <FlatList
                     data={jogadores}
-                    keyExtractor={(jogador) => jogador.name}
+                    keyExtractor={(item) => item.name + Math.random()}
                     renderItem={({ item }) => (
-                        <View style={styles.listItem}>
-                            <Text style={{fontWeight:'bold'}}>{item.name}: {item.ability}</Text>
-                            {/* <Button title="X" onPress={() => { }} /> */}
-                        </View>
+                        <ListItem name={item.name} ability={item.ability} handleRemove={handleRemove} withRemove />
                     )}
-                />
-            </View>
-            <View style={styles.buttonContainer}>
-                <Button title="Gerar Sorteio" onPress={() => {
-                    sort(jogadores)
-                    onClose()
-                    }} />
-                <Button color='red' title="Excluir Lista" onPress={() => {
-                    handleAlert();
-                }} />
-            </View>
-        </Modal>
+                />)}
+
+        </Modal >
     )
 }
 
@@ -126,7 +244,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f2f2f2',
         marginLeft: 20,
         paddingLeft: 20,
-        height:30
+        height: 30
     },
     buttonContainer: {
         flexDirection: 'row',
@@ -134,7 +252,20 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     button: {
-        width: '40%',
-        margin: 5
+        width: '30%',
+        height: 40,
+        margin: 5,
+        borderWidth: 2,
+        borderRadius: 5,
+        alignItems: 'center',
+        justifyContent: "center"
+    },
+    input: {
+        height: 40,
+        borderWidth: 2,
+        borderRadius: 5,
+        marginHorizontal: 10,
+        paddingLeft: 10
+
     }
 })

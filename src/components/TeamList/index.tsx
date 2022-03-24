@@ -3,18 +3,18 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { PlayerProps } from "../../../App";
 
 interface TeamListProps{
-    team: PlayerProps[]
+    team: string[]
 }
 
 function TeamList({team}:TeamListProps): JSX.Element {
-   console.log('mudou $$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+    console.log('JOgadores', team.length)
     return (   
         <FlatList
                 style={styles.teamList}
                 data={team}
-                keyExtractor={(item) => item.name}
+                keyExtractor={(item) => item}
                 renderItem={({ item }) => {
-                    return <Text>{item.name}</Text>;
+                    return <Text style={styles.nome}>{item}</Text>;
                 }}
             />
     )
@@ -26,6 +26,10 @@ const styles = StyleSheet.create({
     teamList: {
         width: "40%",
         maxHeight: 150,
-
     },
+    nome:{
+        fontSize:14,
+        fontWeight:'500',
+        color:'#000'
+    }
 })
